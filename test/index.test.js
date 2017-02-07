@@ -22,9 +22,29 @@ describe('[index]', function () {
     expect(out).to.have.property('emit').and.to.be.a('function');
   });
 
-  it('wraps a stream that is piped in');
+  it('wraps a stream that is piped in', function () {
+    var stream = through();
 
-  it('throws an error if a non-stream is piped in');
+    var originalPipe = stream.pipe;
+    var originalEmit = stream.emit;
+
+    var wrapped = lib().pipe(stream);
+
+    expect(wrapped)
+      .to.have.a.property('pipe')
+      .and.to.be.a('function')
+      .and.to.not.equal(originalPipe);
+    expect(wrapped)
+      .to.have.a.property('emit')
+      .and.to.be.a('function')
+      .and.to.not.equal(originalEmit);
+  });
+
+  it('throws an error if a non-stream is piped in', function () {
+    expect(function () {
+      lib().pipe('not a stream');
+    }).to.throw(TypeError, 'parameter must be a stream');
+  });
 
   it('passes through events that are emitted on the stream');
 
