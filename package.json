@@ -1,0 +1,26 @@
+{
+  "name": "gulp-graceful-error",
+  "version": "1.0.0",
+  "description": "gulp-graceful-error",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "coverage": "istanbul cover --dir coverage node_modules/mocha/bin/_mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/catdad/gulp-graceful-error.git"
+  },
+  "keywords": [],
+  "author": "Kiril Vatev <vatev.1@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/catdad/gulp-graceful-error/issues"
+  },
+  "homepage": "https://github.com/catdad/gulp-graceful-error#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.5",
+    "mocha": "^3.2.0"
+  }
+}
