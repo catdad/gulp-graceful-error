@@ -1,0 +1,19 @@
+language: node_js
+
+node_js:
+  - "node"
+  - "7.2"
+  - "6.9"
+  - "5.12"
+  - "4.4"
+  - "iojs"
+  - "0.12"
+  - "0.10"
+
+addons:
+  code_climate:
+    repo_token: cbd74b832ace849132461ca5879b5ddc62f0cb9235a79ab64278472859fbb3a6
+
+after_script:
+  - npm run coverage
+  - codeclimate-test-reporter < coverage/lcov.info
