@@ -1,7 +1,7 @@
 {
   "name": "gulp-graceful-error",
   "version": "1.0.0",
-  "description": "gulp-graceful-error",
+  "description": "allow failing tasks to continue the build while still failing",
   "main": "lib/index.js",
   "scripts": {
     "test": "mocha",
