@@ -29,4 +29,8 @@ describe('[index]', function () {
   it('passes through events that are emitted on the stream');
 
   it('passes through events that are emitted on a stream that is piped in');
+
+  it('passes errors through by default');
+
+  it('sets process.exitCode when an error is encountered in graceful mode');
 });
