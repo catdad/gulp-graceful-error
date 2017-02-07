@@ -2,7 +2,7 @@
   "name": "gulp-graceful-error",
   "version": "1.0.0",
   "description": "gulp-graceful-error",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "mocha",
     "coverage": "istanbul cover --dir coverage node_modules/mocha/bin/_mocha"
