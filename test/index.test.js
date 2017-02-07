@@ -3,7 +3,7 @@
 var stream = require('stream');
 
 var expect = require('chai').expect;
-var through = require('through');
+var through = require('through2');
 
 var lib = require('../');
 
