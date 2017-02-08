@@ -46,7 +46,19 @@ describe('[index]', function () {
     }).to.throw(TypeError, 'parameter must be a stream');
   });
 
-  it('passes through events that are emitted on the stream');
+  it('passes through events that are emitted on the stream', function (done) {
+    var stream = through();
+    var wrapped = lib().pipe(stream);
+
+    wrapped.on('pineapples', function (arg1, arg2) {
+      expect(arg1).to.equal(1);
+      expect(arg2).to.equal(2);
+
+      done();
+    });
+
+    stream.emit('pineapples', 1, 2);
+  });
 
   it('passes through events that are emitted on a stream that is piped in');
 
