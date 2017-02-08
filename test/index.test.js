@@ -73,7 +73,34 @@ describe('[index]', function () {
     stream.emit('pineapples', 1, 2);
   });
 
-  it('passes errors through by default');
+  it('passes errors by default', function (done) {
+    var ERR = new Error('pineapple error');
+
+    var stream = lib();
+
+    stream.on('error', function (err) {
+      expect(err).to.equal(ERR);
+
+      done();
+    });
+
+    stream.emit('error', ERR);
+  });
+
+  it('passes errors by default on streams that are piped in', function (done) {
+    var ERR = new Error('pineapple error');
+
+    var stream = through();
+    var wrapped = lib().pipe(stream);
+
+    wrapped.on('error', function (err) {
+      expect(err).to.equal(ERR);
+
+      done();
+    });
+
+    stream.emit('error', ERR);
+  });
 
   it('sets process.exitCode when an error is encountered in graceful mode');
 });
