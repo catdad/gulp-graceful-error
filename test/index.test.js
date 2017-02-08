@@ -1,15 +1,15 @@
 /* jshint node: true, mocha: true */
 
-var stream = require('stream');
-var vm = require('vm');
 var fs = require('fs');
+var vm = require('vm');
+var stream = require('stream');
 
 var expect = require('chai').expect;
 var through = require('through2');
 var unstyle = require('unstyle');
 
 var libFilename = require.resolve('../');
-var libFile = fs.readFileSync(libFilename);
+var libFile = fs.readFileSync(libFilename).toString();
 var lib = require(libFilename);
 
 // allow hijacking IO, so that we can both
@@ -54,7 +54,9 @@ var fakeIo = (function () {
 })();
 
 function getLibInVm(proc) {
-  var code = '(function (exports, require, module, process) {' + libFile + '})';
+  var start = '(function (exports, require, module, process) {';
+  var end = '})';
+  var code = start + libFile.trim() + end;
 
   var fakeProcess = Object.defineProperty({}, 'exitCode', {
     configurable: false,
@@ -70,7 +72,10 @@ function getLibInVm(proc) {
     exports: {}
   };
 
-  vm.runInThisContext(code)(mod.exports, require, mod, fakeProcess);
+  vm.runInThisContext(code, {
+    filename: libFilename,
+    columnOffset: start.length
+  })(mod.exports, require, mod, fakeProcess);
 
   return mod.exports;
 }
