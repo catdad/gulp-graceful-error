@@ -1,11 +1,58 @@
 /* jshint node: true, mocha: true */
 
 var stream = require('stream');
+var vm = require('vm');
+var fs = require('fs');
 
 var expect = require('chai').expect;
 var through = require('through2');
+var unstyle = require('unstyle');
 
-var lib = require('../');
+var libFilename = require.resolve('../');
+var libFile = fs.readFileSync(libFilename);
+var lib = require(libFilename);
+
+// allow hijacking IO, so that we can both
+// test values and not log during a test
+var fakeIo = (function () {
+
+  var originalStdout;
+  var originalStderr;
+
+  var outData = [];
+  var errData = [];
+
+  function collect(arr) {
+    return function (val) {
+      arr.push(new Buffer(val));
+    };
+  }
+
+  return {
+    activate: function () {
+      originalStdout = process.stdout.write;
+      originalStderr = process.stderr.write;
+
+      process.stdout.write = collect(outData);
+      process.stderr.write = collect(errData);
+    },
+    deactivate: function () {
+      process.stdout.write = originalStdout;
+      process.stderr.write = originalStderr;
+
+      var data = {
+        stdout: Buffer.concat(outData).toString(),
+        stderr: Buffer.concat(errData).toString()
+      };
+
+      outData = [];
+      errData = [];
+
+      return data;
+    }
+  };
+})();
+
 
 describe('[index]', function () {
   it('is a function', function () {
@@ -104,5 +151,74 @@ describe('[index]', function () {
     stream.emit('error', ERR, 1);
   });
 
-  it('sets process.exitCode when an error is encountered in graceful mode');
+  it('sets process.exitCode when an error is encountered in graceful mode', function (done) {
+
+    fakeIo.activate();
+
+    var ERR = new Error('pineapples');
+    var stream = through();
+
+    var code = '(function (exports, require, module, process) {' + libFile + '})';
+
+    var script = new vm.Script(code);
+
+    var exitCode;
+
+    var fakeProcess = Object.defineProperty({
+      stdout: through(),
+      stderr: through()
+    }, 'exitCode', {
+      configurable: false,
+      get: function () {
+        return;
+      },
+      set: function (val) {
+        exitCode = val;
+      }
+    });
+
+    var context = vm.createContext({
+      process: fakeProcess,
+      Error: Error,
+      Function: Function
+    });
+
+    var mod = {
+      exports: {}
+    };
+
+    script.runInContext(context)(mod.exports, require, mod, fakeProcess);
+
+    // sanity test that the VM is working properly
+    expect(mod.exports).to.be.a('function');
+
+    var out = mod.exports().pipe(stream);
+
+    out.graceful();
+
+    out.on('end', function () {
+      expect(exitCode).to.equal(1);
+
+      var ioData = fakeIo.deactivate();
+
+      expect(ioData.stdout).to.have.length.above(0);
+      expect(ioData.stderr).to.have.lengthOf(0);
+
+      var stdout = unstyle.string(ioData.stdout);
+
+      // test that the original output was in color
+      expect(ioData.stdout).to.not.equal(stdout);
+
+      // test that the content is expected
+      expect(stdout)
+        .to.match(/Error in plugin 'graceful-gulp'/)
+        .and.to.match(/pineapples/);
+
+      done();
+    });
+
+    out.emit('error', ERR);
+  });
+
+  it('graceful can be overwriten by passing in a boolean to the function');
 });
