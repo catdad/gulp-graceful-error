@@ -186,11 +186,11 @@ describe('[index]', function () {
     var stream = through();
     var mod = getLibInVm(proc);
 
-    var out = mod().pipe(stream);
+    var wrapped = mod().pipe(stream);
 
-    out.graceful();
+    wrapped.graceful();
 
-    out.on('end', function () {
+    wrapped.on('end', function () {
       expect(proc).to.have.property('exitCode').to.equal(1);
 
       var ioData = fakeIo.deactivate();
@@ -211,8 +211,23 @@ describe('[index]', function () {
       done();
     });
 
-    out.emit('error', ERR);
+    stream.emit('error', ERR);
   });
 
-  it('graceful can be overwriten by passing in a boolean to the function');
+  it('graceful can be overwriten by passing in a boolean to the function', function (done) {
+    var ERR = new Error('pineapples');
+    var stream = through();
+    var wrapped = lib().pipe(stream);
+
+    wrapped.graceful();
+    wrapped.graceful(false);
+
+    wrapped.on('error', function (err) {
+      expect(err).to.equal(ERR);
+
+      done();
+    });
+
+    stream.emit('error', ERR);
+  });
 });
