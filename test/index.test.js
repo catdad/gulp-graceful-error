@@ -78,13 +78,14 @@ describe('[index]', function () {
 
     var stream = lib();
 
-    stream.on('error', function (err) {
+    stream.on('error', function (err, arg1) {
       expect(err).to.equal(ERR);
+      expect(arg1).to.equal(1);
 
       done();
     });
 
-    stream.emit('error', ERR);
+    stream.emit('error', ERR, 1);
   });
 
   it('passes errors by default on streams that are piped in', function (done) {
@@ -93,13 +94,14 @@ describe('[index]', function () {
     var stream = through();
     var wrapped = lib().pipe(stream);
 
-    wrapped.on('error', function (err) {
+    wrapped.on('error', function (err, arg1) {
       expect(err).to.equal(ERR);
+      expect(arg1).to.equal(1);
 
       done();
     });
 
-    stream.emit('error', ERR);
+    stream.emit('error', ERR, 1);
   });
 
   it('sets process.exitCode when an error is encountered in graceful mode');
