@@ -53,6 +53,34 @@ var fakeIo = (function () {
   };
 })();
 
+function getLibInVm(proc) {
+  var code = '(function (exports, require, module, process) {' + libFile + '})';
+
+  var script = new vm.Script(code);
+
+  var fakeProcess = Object.defineProperty({}, 'exitCode', {
+    configurable: false,
+    get: function () {
+      return;
+    },
+    set: function (val) {
+      proc.exitCode = val;
+    }
+  });
+
+  var context = vm.createContext({
+    Error: Error,
+    Function: Function
+  });
+
+  var mod = {
+    exports: {}
+  };
+
+  script.runInContext(context)(mod.exports, require, mod, fakeProcess);
+
+  return mod.exports;
+}
 
 describe('[index]', function () {
   it('is a function', function () {
@@ -155,49 +183,17 @@ describe('[index]', function () {
 
     fakeIo.activate();
 
+    var proc = {};
     var ERR = new Error('pineapples');
     var stream = through();
+    var mod = getLibInVm(proc);
 
-    var code = '(function (exports, require, module, process) {' + libFile + '})';
-
-    var script = new vm.Script(code);
-
-    var exitCode;
-
-    var fakeProcess = Object.defineProperty({
-      stdout: through(),
-      stderr: through()
-    }, 'exitCode', {
-      configurable: false,
-      get: function () {
-        return;
-      },
-      set: function (val) {
-        exitCode = val;
-      }
-    });
-
-    var context = vm.createContext({
-      process: fakeProcess,
-      Error: Error,
-      Function: Function
-    });
-
-    var mod = {
-      exports: {}
-    };
-
-    script.runInContext(context)(mod.exports, require, mod, fakeProcess);
-
-    // sanity test that the VM is working properly
-    expect(mod.exports).to.be.a('function');
-
-    var out = mod.exports().pipe(stream);
+    var out = mod().pipe(stream);
 
     out.graceful();
 
     out.on('end', function () {
-      expect(exitCode).to.equal(1);
+      expect(proc).to.have.property('exitCode').to.equal(1);
 
       var ioData = fakeIo.deactivate();
 
