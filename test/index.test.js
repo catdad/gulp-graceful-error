@@ -56,8 +56,6 @@ var fakeIo = (function () {
 function getLibInVm(proc) {
   var code = '(function (exports, require, module, process) {' + libFile + '})';
 
-  var script = new vm.Script(code);
-
   var fakeProcess = Object.defineProperty({}, 'exitCode', {
     configurable: false,
     get: function () {
@@ -68,16 +66,11 @@ function getLibInVm(proc) {
     }
   });
 
-  var context = vm.createContext({
-    Error: Error,
-    Function: Function
-  });
-
   var mod = {
     exports: {}
   };
 
-  script.runInContext(context)(mod.exports, require, mod, fakeProcess);
+  vm.runInThisContext(code)(mod.exports, require, mod, fakeProcess);
 
   return mod.exports;
 }
