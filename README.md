@@ -36,7 +36,7 @@ var mocha = require('gulp-mocha');
 var graceful = require('gulp-graceful-error');
 
 gulp.task('lint', function () {
-  return gulp.src(source.js)
+  return gulp.src('lib/**/*.js')
     // add graceful to your pipeline
     .pipe(graceful())
     .pipe(eslint())
@@ -48,7 +48,7 @@ gulp.task('lint', function () {
 });
 
 gulp.task('test', function () {
-  return gulp.src(source.test)
+  return gulp.src('test/**/*.test.js')
     .pipe(graceful())
     .pipe(mocha())
     .graceful();
