@@ -177,6 +177,22 @@ describe('[index]', function () {
     stream.emit('error', ERR, 1);
   });
 
+  it('can be chained from the graceful method', function () {
+    var stream = lib();
+
+    var returnValue = stream.graceful();
+
+    expect(returnValue).to.equal(stream);
+  });
+
+  it('can be chained from the graceful method of a piped-in stream', function () {
+    var stream = through();
+
+    var returnValue = lib().pipe(stream).graceful();
+
+    expect(returnValue).to.equal(stream);
+  });
+
   it('sets process.exitCode when an error is encountered in graceful mode', function (done) {
 
     fakeIo.activate();
