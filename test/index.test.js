@@ -214,7 +214,7 @@ describe('[index]', function () {
     stream.emit('error', ERR);
   });
 
-  it('graceful can be overwriten by passing in a boolean to the function', function (done) {
+  it('can be override graceful mode by passing in a boolean to the graceful function', function (done) {
     var ERR = new Error('pineapples');
     var stream = through();
     var wrapped = lib().pipe(stream);
