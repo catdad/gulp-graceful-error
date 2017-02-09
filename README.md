@@ -1,4 +1,4 @@
-gulp-graceful-error
+# gulp graceful error
 
 [![Build][1]][2]
 [![Test Coverage][3]][4]
@@ -23,3 +23,34 @@ gulp-graceful-error
 [10]: https://david-dm.org/catdad/gulp-graceful-error.svg
 [11]: https://david-dm.org/catdad/gulp-graceful-error
 
+So, you want to run all your tasks in one build... you have your linting, unit tests, contract tests... all running when you run your build. And sometimes, one of those has a failure, and it halts your whole build. You have a linting error and now you can't see if there are any test failures in your CI. You have to wait for a whole new build, only to fix one more error without getting the full report. Why can't you just get a list of all the failures all at once? Right? Well, you've come to the right place.
+
+`gulp-graceful-error` allows you to savely handle those failures while still being sure that the build will indeed fail.
+
+## Example
+
+```javascript
+var gulp = require('gulp');
+var eslint = require('gulp-eslint');
+var mocha = require('gulp-mocha');
+var graceful = require('gulp-graceful-error');
+
+gulp.task('lint', function () {
+  return gulp.src(source.js)
+    // add graceful to your pipeline
+    .pipe(graceful())
+    .pipe(eslint())
+    .pipe(eslint.format())
+    .pipe(eslint.failAfterError())
+    // call the `graceful` function on each stream
+    // that you want to fail gracefully
+    .graceful();
+});
+
+gulp.task('test', function () {
+  return gulp.src(source.test)
+    .pipe(graceful())
+    .pipe(mocha())
+    .graceful();
+});
+```
