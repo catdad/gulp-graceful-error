@@ -177,6 +177,14 @@ describe('[index]', function () {
     stream.emit('error', ERR, 1);
   });
 
+  it('returns the piped in stream from the pipe method', function () {
+    var stream = through();
+
+    var returnValue = lib().pipe(stream);
+
+    expect(returnValue).to.equal(stream);
+  });
+
   it('can be chained from the graceful method', function () {
     var stream = lib();
 
