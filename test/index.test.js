@@ -97,8 +97,6 @@ function getLibInVm(proc) {
       columnOffset: start.length
     };
 
-  // TODO cannot use this if any test ran outside the vm,
-  // because of bugs in istanbul
   vm.runInThisContext(code, vmOpts)(vmModule.exports, require, vmModule, fakeProcess);
 
   return vmModule.exports;
