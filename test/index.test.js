@@ -82,9 +82,9 @@ function getLibInVm(proc) {
   vm.runInThisContext(code, {
     filename: vmModule.filename,
     columnOffset: start.length
-  })(mod.exports, require, mod, fakeProcess);
+  })(vmModule.exports, require, vmModule, fakeProcess);
 
-  return mod.exports;
+  return vmModule.exports;
 }
 
 describe('[index]', function () {
