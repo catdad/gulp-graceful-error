@@ -20,7 +20,10 @@ Object.defineProperty(mod, 'lib', {
   enumerable: true,
   configurable: false,
   get: function () {
+    // run all tests through the vm
     return getLibInVm(vmProcess);
+
+    // run non-vm tests outside of the vm
 //    return require(mod.filename);
   }
 });
@@ -83,6 +86,8 @@ function getLibInVm(proc) {
   };
 
   // this is wrong, but is the API that istanbul uses
+  // TODO cannot use this if any test ran outside the vm,
+  // because of bugs in istanbul
   vm.runInThisContext(code, mod.filename)(vmModule.exports, require, vmModule, fakeProcess);
 
   // this is the correct node API, but breaks istanbul coverage
