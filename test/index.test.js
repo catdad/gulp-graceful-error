@@ -8,16 +8,26 @@ var expect = require('chai').expect;
 var through = require('through2');
 var unstyle = require('unstyle');
 
-var libFilename = require.resolve('../');
-var libFile = fs.readFileSync(libFilename).toString();
-var lib = require(libFilename);
+var mod = {
+  filename: require.resolve('../')
+};
+
+mod.file = fs.readFileSync(mod.filename).toString();
+
+Object.defineProperty(mod, 'lib', {
+  enumerable: true,
+  configurable: false,
+  get: function () {
+    return require(mod.filename);
+  }
+});
 
 // allow hijacking IO, so that we can both
 // test values and not log during a test
 var fakeIo = (function () {
 
-  var originalStdout;
-  var originalStderr;
+  var originalStdout = process.stdout.write;
+  var originalStderr = process.stderr.write;
 
   var outData = [];
   var errData = [];
@@ -30,9 +40,6 @@ var fakeIo = (function () {
 
   return {
     activate: function () {
-      originalStdout = process.stdout.write;
-      originalStderr = process.stderr.write;
-
       process.stdout.write = collect(outData);
       process.stderr.write = collect(errData);
     },
@@ -56,7 +63,7 @@ var fakeIo = (function () {
 function getLibInVm(proc) {
   var start = '(function (exports, require, module, process) {';
   var end = '})';
-  var code = start + libFile.trim() + end;
+  var code = start + mod.file.trim() + end;
 
   var fakeProcess = Object.defineProperty({}, 'exitCode', {
     configurable: false,
@@ -68,25 +75,25 @@ function getLibInVm(proc) {
     }
   });
 
-  var mod = {
+  var vmModule = {
     exports: {}
   };
 
   vm.runInThisContext(code, {
-    filename: libFilename,
+    filename: vmModule.filename,
     columnOffset: start.length
-  })(mod.exports, require, mod, fakeProcess);
+  })(vmModule.exports, require, vmModule, fakeProcess);
 
-  return mod.exports;
+  return vmModule.exports;
 }
 
 describe('[index]', function () {
   it('is a function', function () {
-    expect(lib).to.be.a('function');
+    expect(mod.lib).to.be.a('function');
   });
 
   it('returns a stream', function () {
-    var out = lib();
+    var out = mod.lib();
 
     // test that it is stream-like...
     expect(out).to.be.instanceof(stream);
@@ -101,7 +108,7 @@ describe('[index]', function () {
     var originalPipe = stream.pipe;
     var originalEmit = stream.emit;
 
-    var wrapped = lib().pipe(stream);
+    var wrapped = mod.lib().pipe(stream);
 
     expect(wrapped)
       .to.have.a.property('pipe')
@@ -115,12 +122,12 @@ describe('[index]', function () {
 
   it('throws an error if a non-stream is piped in', function () {
     expect(function () {
-      lib().pipe('not a stream');
+      mod.lib().pipe('not a stream');
     }).to.throw(TypeError, 'parameter must be a stream');
   });
 
   it('passes through events that are emitted on the stream', function (done) {
-    var stream = lib();
+    var stream = mod.lib();
 
     stream.on('pineapples', function (arg1, arg2) {
       expect(arg1).to.equal(1);
@@ -134,7 +141,7 @@ describe('[index]', function () {
 
   it('passes through events that are emitted on a stream that is piped in', function (done) {
     var stream = through();
-    var wrapped = lib().pipe(stream);
+    var wrapped = mod.lib().pipe(stream);
 
     wrapped.on('pineapples', function (arg1, arg2) {
       expect(arg1).to.equal(1);
@@ -149,7 +156,7 @@ describe('[index]', function () {
   it('passes errors by default', function (done) {
     var ERR = new Error('pineapple error');
 
-    var stream = lib();
+    var stream = mod.lib();
 
     stream.on('error', function (err, arg1) {
       expect(err).to.equal(ERR);
@@ -165,7 +172,7 @@ describe('[index]', function () {
     var ERR = new Error('pineapple error');
 
     var stream = through();
-    var wrapped = lib().pipe(stream);
+    var wrapped = mod.lib().pipe(stream);
 
     wrapped.on('error', function (err, arg1) {
       expect(err).to.equal(ERR);
@@ -180,13 +187,13 @@ describe('[index]', function () {
   it('returns the piped in stream from the pipe method', function () {
     var stream = through();
 
-    var returnValue = lib().pipe(stream);
+    var returnValue = mod.lib().pipe(stream);
 
     expect(returnValue).to.equal(stream);
   });
 
   it('can be chained from the graceful method', function () {
-    var stream = lib();
+    var stream = mod.lib();
 
     var returnValue = stream.graceful();
 
@@ -196,7 +203,7 @@ describe('[index]', function () {
   it('can be chained from the graceful method of a piped-in stream', function () {
     var stream = through();
 
-    var returnValue = lib().pipe(stream).graceful();
+    var returnValue = mod.lib().pipe(stream).graceful();
 
     expect(returnValue).to.equal(stream);
   });
@@ -208,9 +215,9 @@ describe('[index]', function () {
     var proc = {};
     var ERR = new Error('pineapples');
     var stream = through();
-    var mod = getLibInVm(proc);
+    var vmMod = getLibInVm(proc);
 
-    var wrapped = mod().pipe(stream);
+    var wrapped = vmMod().pipe(stream);
 
     wrapped.graceful();
 
@@ -241,7 +248,7 @@ describe('[index]', function () {
   it('can be override graceful mode by passing in a boolean to the graceful function', function (done) {
     var ERR = new Error('pineapples');
     var stream = through();
-    var wrapped = lib().pipe(stream);
+    var wrapped = mod.lib().pipe(stream);
 
     wrapped.graceful();
     wrapped.graceful(false);
