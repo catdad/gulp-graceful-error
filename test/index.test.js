@@ -8,6 +8,8 @@ var expect = require('chai').expect;
 var through = require('through2');
 var unstyle = require('unstyle');
 
+var vmProcess = {};
+
 var mod = {
   filename: require.resolve('../')
 };
@@ -18,7 +20,8 @@ Object.defineProperty(mod, 'lib', {
   enumerable: true,
   configurable: false,
   get: function () {
-    return require(mod.filename);
+    return getLibInVm(vmProcess);
+//    return require(mod.filename);
   }
 });
 
@@ -79,10 +82,14 @@ function getLibInVm(proc) {
     exports: {}
   };
 
-  vm.runInThisContext(code, {
-    filename: vmModule.filename,
-    columnOffset: start.length
-  })(vmModule.exports, require, vmModule, fakeProcess);
+  // this is wrong, but is the API that istanbul uses
+  vm.runInThisContext(code, mod.filename)(vmModule.exports, require, vmModule, fakeProcess);
+
+  // this is the correct node API, but breaks istanbul coverage
+//  vm.runInThisContext(code, {
+//    filename: libFilename,
+//    columnOffset: start.length
+//  })(vmModule.exports, require, vmModule, fakeProcess);
 
   return vmModule.exports;
 }
