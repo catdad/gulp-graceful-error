@@ -8,6 +8,7 @@ var expect = require('chai').expect;
 var through = require('through2');
 var unstyle = require('unstyle');
 
+var CONFUSING_COVERAGE = true;
 var vmProcess = {};
 
 var mod = {
@@ -20,11 +21,13 @@ Object.defineProperty(mod, 'lib', {
   enumerable: true,
   configurable: false,
   get: function () {
-    // run all tests through the vm
-    return getLibInVm(vmProcess);
+    if (CONFUSING_COVERAGE) {
+      // run all tests through the vm
+      return getLibInVm(vmProcess);
+    }
 
     // run non-vm tests outside of the vm
-//    return require(mod.filename);
+    return require(mod.filename);
   }
 });
 
@@ -85,16 +88,18 @@ function getLibInVm(proc) {
     exports: {}
   };
 
-  // this is wrong, but is the API that istanbul uses
+  var vmOpts = CONFUSING_COVERAGE ?
+    // this is wrong, but is the API that istanbul uses
+    mod.filename :
+    // this is the correct node API, but breaks istanbul coverage
+    {
+      filename: mod.filename,
+      columnOffset: start.length
+    };
+
   // TODO cannot use this if any test ran outside the vm,
   // because of bugs in istanbul
-  vm.runInThisContext(code, mod.filename)(vmModule.exports, require, vmModule, fakeProcess);
-
-  // this is the correct node API, but breaks istanbul coverage
-//  vm.runInThisContext(code, {
-//    filename: libFilename,
-//    columnOffset: start.length
-//  })(vmModule.exports, require, vmModule, fakeProcess);
+  vm.runInThisContext(code, vmOpts)(vmModule.exports, require, vmModule, fakeProcess);
 
   return vmModule.exports;
 }
