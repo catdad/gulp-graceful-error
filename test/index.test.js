@@ -26,8 +26,8 @@ Object.defineProperty(mod, 'lib', {
 // test values and not log during a test
 var fakeIo = (function () {
 
-  var originalStdout;
-  var originalStderr;
+  var originalStdout = process.stdout.write;
+  var originalStderr = process.stderr.write;
 
   var outData = [];
   var errData = [];
@@ -40,9 +40,6 @@ var fakeIo = (function () {
 
   return {
     activate: function () {
-      originalStdout = process.stdout.write;
-      originalStderr = process.stderr.write;
-
       process.stdout.write = collect(outData);
       process.stderr.write = collect(errData);
     },
@@ -78,12 +75,12 @@ function getLibInVm(proc) {
     }
   });
 
-  var mod = {
+  var vmModule = {
     exports: {}
   };
 
   vm.runInThisContext(code, {
-    filename: mod.filename,
+    filename: vmModule.filename,
     columnOffset: start.length
   })(mod.exports, require, mod, fakeProcess);
 
@@ -218,9 +215,9 @@ describe('[index]', function () {
     var proc = {};
     var ERR = new Error('pineapples');
     var stream = through();
-    var mod = getLibInVm(proc);
+    var vmMod = getLibInVm(proc);
 
-    var wrapped = mod().pipe(stream);
+    var wrapped = vmMod().pipe(stream);
 
     wrapped.graceful();
 
