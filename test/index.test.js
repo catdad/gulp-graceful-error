@@ -8,6 +8,16 @@ var expect = require('chai').expect;
 var through = require('through2');
 var unstyle = require('unstyle');
 
+// Only run tests entirely thorugh the vm when
+// running the npm coverage script. Otherwise,
+// run the code directly.
+var CONFUSING_COVERAGE = !!(
+  process.env.npm_lifecycle_event &&
+  process.env.npm_lifecycle_event === 'coverage'
+);
+
+var vmProcess = {};
+
 var mod = {
   filename: require.resolve('../')
 };
@@ -18,6 +28,12 @@ Object.defineProperty(mod, 'lib', {
   enumerable: true,
   configurable: false,
   get: function () {
+    if (CONFUSING_COVERAGE) {
+      // run all tests through the vm
+      return getLibInVm(vmProcess);
+    }
+
+    // run non-vm tests outside of the vm
     return require(mod.filename);
   }
 });
@@ -79,10 +95,16 @@ function getLibInVm(proc) {
     exports: {}
   };
 
-  vm.runInThisContext(code, {
-    filename: vmModule.filename,
-    columnOffset: start.length
-  })(vmModule.exports, require, vmModule, fakeProcess);
+  var vmOpts = CONFUSING_COVERAGE ?
+    // this is wrong, but is the API that istanbul uses
+    mod.filename :
+    // this is the correct node API, but breaks istanbul coverage
+    {
+      filename: mod.filename,
+      columnOffset: start.length
+    };
+
+  vm.runInThisContext(code, vmOpts)(vmModule.exports, require, vmModule, fakeProcess);
 
   return vmModule.exports;
 }
