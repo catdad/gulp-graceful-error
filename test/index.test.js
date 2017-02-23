@@ -8,7 +8,14 @@ var expect = require('chai').expect;
 var through = require('through2');
 var unstyle = require('unstyle');
 
-var CONFUSING_COVERAGE = true;
+// Only run tests entirely thorugh the vm when
+// running the npm coverage script. Otherwise,
+// run the code directly.
+var CONFUSING_COVERAGE = !!(
+  process.env.npm_lifecycle_event &&
+  process.env.npm_lifecycle_event === 'coverage'
+);
+
 var vmProcess = {};
 
 var mod = {
