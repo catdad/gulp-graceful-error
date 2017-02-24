@@ -1,14 +1,14 @@
 language: node_js
 
 node_js:
-  - "node"
-  - "7.2"
-  - "6.9"
-  - "5.12"
-  - "4.4"
-  - "iojs"
-  - "0.12"
-  - "0.10"
+  - node
+  - '7.2'
+  - '6.9'
+  - '5.12'
+  - '4.4'
+  - iojs
+  - '0.12'
+  - '0.10'
 
 addons:
   code_climate:
@@ -17,3 +17,13 @@ addons:
 after_script:
   - npm run coverage
   - codeclimate-test-reporter < coverage/lcov.info
+
+deploy:
+  provider: npm
+  email: vatev.1@gmail.com
+  api_key:
+    secure: o64V8CmymiH2vAE2dHdA9qmt4FohzHMQZL+JhgJPlpDf87esq6/abIK84Oopu9s8bWXPboUDRLxjhpttPK6lbxHFns8An/Rexng9juI9vvhSr2hlhB0IzHRzyDtWJrc35+8pp51dHTf7rnRHn/pig5UCMXd4WE1JKCAzE/2dxrz6NuPdMni+lYeHBx8ki2mUDxjA29emPx9nWqxnvSh+YoaW6hAMioSpe30nUwuqDHVwPmKfYYxHHMT4OZonBULlx91OMFXq9gDNRUDGIXUk1NnZrOy59ghNjGFqOgQ5bp7IABkvtVUce/4rgzG5fjWbKYsdMsL+WnJZrc230JGYOLVkjy+8Fnbd/+yeN4uo6EE4KerQl/pyc1m6ZWvBgutagaKTf2xgl1fYlaXcA3hxLHij+q0q7sOKo/qbXoD+hrnY6KtlgXsQ9ywCrSn5bKqL+So8g3zwH6pCJLl9bsLROUv4v5yvZPqWRuZQHdWXLh7RZZjvC37mwePQ06w4u0P6ObgaHShhc4BfYg2guCGgsU3TSlVoZRBNhoY91GwFTqX84/ft//7AedMfSxVl/Yy+l+vHmCr5gkMysSrYcZDfv3+cNdSmPSkPR1iPSW0h3aITFlIbpJbMkfDYibuTyBXZprGu0v+Y5xcZzyI3LafeN/p3b85SERzWFwqT56Z8rEo=
+  on:
+    tags: true
+    repo: catdad/gulp-graceful-error
+    node: '6.9'
