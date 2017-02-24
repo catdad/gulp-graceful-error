@@ -110,6 +110,10 @@ function getLibInVm(proc) {
 }
 
 describe('[index]', function () {
+  beforeEach(function () {
+    vmProcess = {};
+  });
+
   it('is a function', function () {
     expect(mod.lib).to.be.a('function');
   });
@@ -231,7 +235,6 @@ describe('[index]', function () {
   });
 
   it('sets process.exitCode when an error is encountered in graceful mode', function (done) {
-
     fakeIo.activate();
 
     var proc = {};
@@ -265,6 +268,34 @@ describe('[index]', function () {
     });
 
     stream.emit('error', ERR);
+  });
+
+  it('silently handled any error after the first in graceful mode', function (done) {
+    fakeIo.activate();
+
+    var stream = through();
+    var vmMod = getLibInVm(vmProcess);
+
+    var wrapped = vmMod().pipe(stream);
+
+    wrapped.graceful();
+
+    wrapped.on('end', function () {
+      var ioData = fakeIo.deactivate();
+
+      expect(ioData.stdout).to.have.length.above(0);
+      expect(ioData.stderr).to.have.lengthOf(0);
+
+      var stdout = unstyle.string(ioData.stdout);
+
+      expect(stdout).to.match(/invalid non-string\/buffer chunk/i);
+
+      done();
+    });
+
+    stream.write(42);
+    stream.write(43);
+    stream.write(44);
   });
 
   it('can be override graceful mode by passing in a boolean to the graceful function', function (done) {
