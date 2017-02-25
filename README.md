@@ -25,7 +25,9 @@
 
 So, you want to run all your tasks in one build... you have your linting, unit tests, contract tests... all running when you run your build. And sometimes, one of those has a failure, and it halts your whole build. You have a linting error and now you can't see if there are any test failures in your CI. You have to wait for a whole new build, only to fix one more error without getting the full report. Why can't you just get a list of all the failures all at once? Right? Well, you've come to the right place.
 
-`gulp-graceful-error` allows you to savely handle those failures while still being sure that the build will indeed fail.
+`gulp-graceful-error` allows you to safely handle those failures while still being sure that the build will indeed fail.
+
+Unlike similar modules out there (_cough `gulp-plumber` cough_), this module will still fail the otherall build, while only allowing the task itself to pass. It also allows you to apply the behavior to only parts of the pipeline in each task, as it requires graceful mode to be enabled on each one of the task steps. If some tasks produce ignorable errors but others must be fatal, you can do that.
 
 ## Example
 
