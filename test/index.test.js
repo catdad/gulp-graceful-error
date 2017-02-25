@@ -109,6 +109,22 @@ function getLibInVm(proc) {
   return vmModule.exports;
 }
 
+function expectThroughObjectStream(stream) {
+  expect(stream)
+    .to.have.property('_readableState')
+    .and.to.have.property('objectMode')
+    .and.to.equal(true);
+
+  expect(stream)
+    .to.have.property('_writableState')
+    .and.to.have.property('objectMode')
+    .and.to.equal(true);
+}
+
+function expectGracefulStream(stream) {
+  expect(stream).to.have.property('graceful').and.to.be.a('function');
+}
+
 describe('[index]', function () {
   beforeEach(function () {
     vmProcess = {};
@@ -118,7 +134,7 @@ describe('[index]', function () {
     expect(mod.lib).to.be.a('function');
   });
 
-  it('returns a stream', function () {
+  it('returns a transform object stream', function () {
     var out = mod.lib();
 
     // test that it is stream-like...
@@ -126,6 +142,9 @@ describe('[index]', function () {
     expect(out).to.have.property('pipe').and.to.be.a('function');
     expect(out).to.have.property('on').and.to.be.a('function');
     expect(out).to.have.property('emit').and.to.be.a('function');
+
+    expectThroughObjectStream(out);
+    expectGracefulStream(out);
   });
 
   it('wraps a stream that is piped in', function () {
@@ -144,6 +163,9 @@ describe('[index]', function () {
       .to.have.a.property('emit')
       .and.to.be.a('function')
       .and.to.not.equal(originalEmit);
+
+    expectThroughObjectStream(wrapped);
+    expectGracefulStream(wrapped);
   });
 
   it('throws an error if a non-stream is piped in', function () {
@@ -316,6 +338,5 @@ describe('[index]', function () {
       stream.emit('error', ERR);
     });
   });
-
 
 });
