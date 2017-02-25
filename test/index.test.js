@@ -218,100 +218,104 @@ describe('[index]', function () {
     expect(returnValue).to.equal(stream);
   });
 
-  it('can be chained from the graceful method', function () {
-    var stream = mod.lib();
+  describe('#graceful', function () {
+    it('can be chained from the graceful method', function () {
+      var stream = mod.lib();
 
-    var returnValue = stream.graceful();
+      var returnValue = stream.graceful();
 
-    expect(returnValue).to.equal(stream);
-  });
-
-  it('can be chained from the graceful method of a piped-in stream', function () {
-    var stream = through();
-
-    var returnValue = mod.lib().pipe(stream).graceful();
-
-    expect(returnValue).to.equal(stream);
-  });
-
-  it('sets process.exitCode when an error is encountered in graceful mode', function (done) {
-    fakeIo.activate();
-
-    var proc = {};
-    var ERR = new Error('pineapples');
-    var stream = through();
-    var vmMod = getLibInVm(proc);
-
-    var wrapped = vmMod().pipe(stream);
-
-    wrapped.graceful();
-
-    wrapped.on('end', function () {
-      expect(proc).to.have.property('exitCode').to.equal(1);
-
-      var ioData = fakeIo.deactivate();
-
-      expect(ioData.stdout).to.have.length.above(0);
-      expect(ioData.stderr).to.have.lengthOf(0);
-
-      var stdout = unstyle.string(ioData.stdout);
-
-      // test that the original output was in color
-      expect(ioData.stdout).to.not.equal(stdout);
-
-      // test that the content is expected
-      expect(stdout)
-        .to.match(/Error in plugin 'graceful-gulp'/)
-        .and.to.match(new RegExp(ERR.message));
-
-      done();
+      expect(returnValue).to.equal(stream);
     });
 
-    stream.emit('error', ERR);
-  });
+    it('can be chained from the graceful method of a piped-in stream', function () {
+      var stream = through();
 
-  it('silently handled any error after the first in graceful mode', function (done) {
-    fakeIo.activate();
+      var returnValue = mod.lib().pipe(stream).graceful();
 
-    var stream = through();
-    var vmMod = getLibInVm(vmProcess);
-
-    var wrapped = vmMod().pipe(stream);
-
-    wrapped.graceful();
-
-    wrapped.on('end', function () {
-      var ioData = fakeIo.deactivate();
-
-      expect(ioData.stdout).to.have.length.above(0);
-      expect(ioData.stderr).to.have.lengthOf(0);
-
-      var stdout = unstyle.string(ioData.stdout);
-
-      expect(stdout).to.match(/invalid non-string\/buffer chunk/i);
-
-      done();
+      expect(returnValue).to.equal(stream);
     });
 
-    stream.write(42);
-    stream.write(43);
-    stream.write(44);
-  });
+    it('sets process.exitCode when an error is encountered in graceful mode', function (done) {
+      fakeIo.activate();
 
-  it('can be override graceful mode by passing in a boolean to the graceful function', function (done) {
-    var ERR = new Error('pineapples');
-    var stream = through();
-    var wrapped = mod.lib().pipe(stream);
+      var proc = {};
+      var ERR = new Error('pineapples');
+      var stream = through();
+      var vmMod = getLibInVm(proc);
 
-    wrapped.graceful();
-    wrapped.graceful(false);
+      var wrapped = vmMod().pipe(stream);
 
-    wrapped.on('error', function (err) {
-      expect(err).to.equal(ERR);
+      wrapped.graceful();
 
-      done();
+      wrapped.on('end', function () {
+        expect(proc).to.have.property('exitCode').to.equal(1);
+
+        var ioData = fakeIo.deactivate();
+
+        expect(ioData.stdout).to.have.length.above(0);
+        expect(ioData.stderr).to.have.lengthOf(0);
+
+        var stdout = unstyle.string(ioData.stdout);
+
+        // test that the original output was in color
+        expect(ioData.stdout).to.not.equal(stdout);
+
+        // test that the content is expected
+        expect(stdout)
+          .to.match(/Error in plugin 'graceful-gulp'/)
+          .and.to.match(new RegExp(ERR.message));
+
+        done();
+      });
+
+      stream.emit('error', ERR);
     });
 
-    stream.emit('error', ERR);
+    it('silently handled any error after the first in graceful mode', function (done) {
+      fakeIo.activate();
+
+      var stream = through();
+      var vmMod = getLibInVm(vmProcess);
+
+      var wrapped = vmMod().pipe(stream);
+
+      wrapped.graceful();
+
+      wrapped.on('end', function () {
+        var ioData = fakeIo.deactivate();
+
+        expect(ioData.stdout).to.have.length.above(0);
+        expect(ioData.stderr).to.have.lengthOf(0);
+
+        var stdout = unstyle.string(ioData.stdout);
+
+        expect(stdout).to.match(/invalid non-string\/buffer chunk/i);
+
+        done();
+      });
+
+      stream.write(42);
+      stream.write(43);
+      stream.write(44);
+    });
+
+    it('can be override graceful mode by passing in a boolean to the graceful function', function (done) {
+      var ERR = new Error('pineapples');
+      var stream = through();
+      var wrapped = mod.lib().pipe(stream);
+
+      wrapped.graceful();
+      wrapped.graceful(false);
+
+      wrapped.on('error', function (err) {
+        expect(err).to.equal(ERR);
+
+        done();
+      });
+
+      stream.emit('error', ERR);
+    });
   });
+
+
 });
