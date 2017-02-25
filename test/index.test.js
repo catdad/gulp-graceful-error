@@ -109,6 +109,33 @@ function getLibInVm(proc) {
   return vmModule.exports;
 }
 
+function expectStream(obj) {
+  expect(obj).to.be.instanceof(stream);
+  expect(obj).to.have.property('pipe').and.to.be.a('function');
+  expect(obj).to.have.property('on').and.to.be.a('function');
+  expect(obj).to.have.property('emit').and.to.be.a('function');
+}
+
+function expectThroughObjectStream(obj) {
+  expectStream(obj);
+
+  expect(obj)
+    .to.have.property('_readableState')
+    .and.to.have.property('objectMode')
+    .and.to.equal(true);
+
+  expect(obj)
+    .to.have.property('_writableState')
+    .and.to.have.property('objectMode')
+    .and.to.equal(true);
+}
+
+function expectGracefulStream(obj) {
+  expectStream(obj);
+
+  expect(obj).to.have.property('graceful').and.to.be.a('function');
+}
+
 describe('[index]', function () {
   beforeEach(function () {
     vmProcess = {};
@@ -118,14 +145,12 @@ describe('[index]', function () {
     expect(mod.lib).to.be.a('function');
   });
 
-  it('returns a stream', function () {
+  it('returns a transform object stream', function () {
     var out = mod.lib();
 
-    // test that it is stream-like...
-    expect(out).to.be.instanceof(stream);
-    expect(out).to.have.property('pipe').and.to.be.a('function');
-    expect(out).to.have.property('on').and.to.be.a('function');
-    expect(out).to.have.property('emit').and.to.be.a('function');
+    // uses object streams by default
+    expectThroughObjectStream(out);
+    expectGracefulStream(out);
   });
 
   it('wraps a stream that is piped in', function () {
@@ -140,10 +165,14 @@ describe('[index]', function () {
       .to.have.a.property('pipe')
       .and.to.be.a('function')
       .and.to.not.equal(originalPipe);
+
     expect(wrapped)
       .to.have.a.property('emit')
       .and.to.be.a('function')
       .and.to.not.equal(originalEmit);
+
+    expectStream(wrapped);
+    expectGracefulStream(wrapped);
   });
 
   it('throws an error if a non-stream is piped in', function () {
@@ -316,6 +345,5 @@ describe('[index]', function () {
       stream.emit('error', ERR);
     });
   });
-
 
 });
