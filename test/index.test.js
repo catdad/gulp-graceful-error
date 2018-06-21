@@ -291,7 +291,7 @@ describe('[index]', function () {
 
         // test that the content is expected
         expect(stdout)
-          .to.match(/Error in plugin 'graceful-gulp'/)
+          .to.match(/Error in plugin ('|")graceful-gulp('|")/)
           .and.to.match(new RegExp(ERR.message));
 
         done();
