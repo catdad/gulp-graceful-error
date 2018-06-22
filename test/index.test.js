@@ -7,6 +7,7 @@ var stream = require('stream');
 var expect = require('chai').expect;
 var through = require('through2');
 var unstyle = require('unstyle');
+var mockIo = require('mock-stdio');
 
 // Only run tests entirely thorugh the vm when
 // running the npm coverage script. Otherwise,
@@ -37,44 +38,6 @@ Object.defineProperty(mod, 'lib', {
     return require(mod.filename);
   }
 });
-
-// allow hijacking IO, so that we can both
-// test values and not log during a test
-var fakeIo = (function () {
-
-  var originalStdout = process.stdout.write;
-  var originalStderr = process.stderr.write;
-
-  var outData = [];
-  var errData = [];
-
-  function collect(arr) {
-    return function (val) {
-      arr.push(new Buffer(val));
-    };
-  }
-
-  return {
-    activate: function () {
-      process.stdout.write = collect(outData);
-      process.stderr.write = collect(errData);
-    },
-    deactivate: function () {
-      process.stdout.write = originalStdout;
-      process.stderr.write = originalStderr;
-
-      var data = {
-        stdout: Buffer.concat(outData).toString(),
-        stderr: Buffer.concat(errData).toString()
-      };
-
-      outData = [];
-      errData = [];
-
-      return data;
-    }
-  };
-})();
 
 function getLibInVm(proc) {
   var start = '(function (exports, require, module, process) {';
@@ -265,7 +228,7 @@ describe('[index]', function () {
     });
 
     it('sets process.exitCode when an error is encountered in graceful mode', function (done) {
-      fakeIo.activate();
+      mockIo.start();
 
       var proc = {};
       var ERR = new Error('pineapples');
@@ -279,7 +242,7 @@ describe('[index]', function () {
       wrapped.on('end', function () {
         expect(proc).to.have.property('exitCode').to.equal(1);
 
-        var ioData = fakeIo.deactivate();
+        var ioData = mockIo.end();
 
         expect(ioData.stdout).to.have.length.above(0);
         expect(ioData.stderr).to.have.lengthOf(0);
@@ -301,7 +264,7 @@ describe('[index]', function () {
     });
 
     it('silently handled any error after the first in graceful mode', function (done) {
-      fakeIo.activate();
+      mockIo.start();
 
       var stream = through();
       var vmMod = getLibInVm(vmProcess);
@@ -311,7 +274,7 @@ describe('[index]', function () {
       wrapped.graceful();
 
       wrapped.on('end', function () {
-        var ioData = fakeIo.deactivate();
+        var ioData = mockIo.end();
 
         expect(ioData.stdout).to.have.length.above(0);
         expect(ioData.stderr).to.have.lengthOf(0);
