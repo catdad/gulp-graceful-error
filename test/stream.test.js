@@ -37,11 +37,7 @@ function expectGracefulStream(obj) {
   expect(obj).to.have.property('graceful').and.to.be.a('function');
 }
 
-describe('[index]', function () {
-  it('is a function', function () {
-    expect(mod.lib).to.be.a('function');
-  });
-
+describe('when called with no arguments', function () {
   it('returns a transform object stream', function () {
     var out = mod.lib();
 
