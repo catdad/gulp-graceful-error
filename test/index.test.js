@@ -1,7 +1,5 @@
 /* jshint node: true, mocha: true */
 
-var fs = require('fs');
-var vm = require('vm');
 var stream = require('stream');
 
 var expect = require('chai').expect;
@@ -9,68 +7,9 @@ var through = require('through2');
 var unstyle = require('unstyle');
 var mockIo = require('mock-stdio');
 
-// Only run tests entirely thorugh the vm when
-// running the npm coverage script. Otherwise,
-// run the code directly.
-var CONFUSING_COVERAGE = !!(
-  process.env.npm_lifecycle_event &&
-  process.env.npm_lifecycle_event === 'coverage'
-);
-
-var vmProcess = {};
-
-var mod = {
-  filename: require.resolve('../')
-};
-
-mod.file = fs.readFileSync(mod.filename).toString();
-
-Object.defineProperty(mod, 'lib', {
-  enumerable: true,
-  configurable: false,
-  get: function () {
-    if (CONFUSING_COVERAGE) {
-      // run all tests through the vm
-      return getLibInVm(vmProcess);
-    }
-
-    // run non-vm tests outside of the vm
-    return require(mod.filename);
-  }
-});
-
-function getLibInVm(proc) {
-  var start = '(function (exports, require, module, process) {';
-  var end = '})';
-  var code = start + mod.file.trim() + end;
-
-  var fakeProcess = Object.defineProperty({}, 'exitCode', {
-    configurable: false,
-    get: function () {
-      return;
-    },
-    set: function (val) {
-      proc.exitCode = val;
-    }
-  });
-
-  var vmModule = {
-    exports: {}
-  };
-
-  var vmOpts = CONFUSING_COVERAGE ?
-    // this is wrong, but is the API that istanbul uses
-    mod.filename :
-    // this is the correct node API, but breaks istanbul coverage
-    {
-      filename: mod.filename,
-      columnOffset: start.length
-    };
-
-  vm.runInThisContext(code, vmOpts)(vmModule.exports, require, vmModule, fakeProcess);
-
-  return vmModule.exports;
-}
+var util = require('./util.js');
+var mod = util.mod;
+var getLibInVm = util.getLibInVm;
 
 function expectStream(obj) {
   expect(obj).to.be.instanceof(stream);
@@ -95,15 +34,10 @@ function expectThroughObjectStream(obj) {
 
 function expectGracefulStream(obj) {
   expectStream(obj);
-
   expect(obj).to.have.property('graceful').and.to.be.a('function');
 }
 
 describe('[index]', function () {
-  beforeEach(function () {
-    vmProcess = {};
-  });
-
   it('is a function', function () {
     expect(mod.lib).to.be.a('function');
   });
@@ -267,7 +201,7 @@ describe('[index]', function () {
       mockIo.start();
 
       var stream = through();
-      var vmMod = getLibInVm(vmProcess);
+      var vmMod = getLibInVm();
 
       var wrapped = vmMod().pipe(stream);
 
