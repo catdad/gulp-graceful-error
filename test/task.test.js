@@ -4,6 +4,7 @@
 var expect = require('chai').expect;
 var mockIo = require('mock-stdio');
 var through = require('through2');
+var Promise = Promise || require('es6-promise').Promise;
 
 var util = require('./util.js');
 var mod = util.mod;
