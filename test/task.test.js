@@ -38,6 +38,13 @@ describe('when called with a function as the first parameter', function () {
   });
 
   describe('when the task is a synchronous function with unknown return', function () {
-    it('returns the return value of the original function');
+    it('returns the return value of the original function', function () {
+      var expected = {};
+      var task = mod.lib(function () {
+        return expected;
+      });
+
+      expect(task()).to.equal(expected);
+    });
   });
 });
