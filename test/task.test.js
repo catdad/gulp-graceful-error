@@ -7,9 +7,17 @@ var mod = util.mod;
 var getLibInVm = util.getLibInVm;
 
 describe('when called with a function as the first parameter', function () {
-  it('returns a function with 0 parameters if passed a function with 0 parameters');
+  it('returns a function with 0 parameters if passed a function with 0 parameters', function () {
+    var task = mod.lib(function () {});
 
-  it('returns a function with 1 parameter if passed a function with 1 parameter');
+    expect(task).to.be.a('function').and.to.have.lengthOf(0);
+  });
+
+  it('returns a function with 1 parameter if passed a function with 1 parameter', function () {
+    var task = mod.lib(function (a) {});
+
+    expect(task).to.be.a('function').and.to.have.lengthOf(1);
+  });
 
   describe('when the task returns a stream', function () {
     it('returns a graceful stream');
