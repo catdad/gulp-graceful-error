@@ -2,6 +2,7 @@
 
 var fs = require('fs');
 var vm = require('vm');
+var stream = require('stream');
 
 var expect = require('chai').expect;
 var unstyle = require('unstyle');
@@ -94,8 +95,37 @@ function expectIoError(io, err) {
   expect(io.stdout).to.not.equal(stdout);
 }
 
+function expectStream(obj) {
+  expect(obj).to.be.instanceof(stream);
+  expect(obj).to.have.property('pipe').and.to.be.a('function');
+  expect(obj).to.have.property('on').and.to.be.a('function');
+  expect(obj).to.have.property('emit').and.to.be.a('function');
+}
+
+function expectThroughObjectStream(obj) {
+  expectStream(obj);
+
+  expect(obj)
+    .to.have.property('_readableState')
+    .and.to.have.property('objectMode')
+    .and.to.equal(true);
+
+  expect(obj)
+    .to.have.property('_writableState')
+    .and.to.have.property('objectMode')
+    .and.to.equal(true);
+}
+
+function expectGracefulStream(obj) {
+  expectStream(obj);
+  expect(obj).to.have.property('graceful').and.to.be.a('function');
+}
+
 module.exports = {
   mod: mod,
   getLibInVm: getLibInVm,
-  expectIoError: expectIoError
+  expectIoError: expectIoError,
+  expectStream: expectStream,
+  expectThroughObjectStream: expectThroughObjectStream,
+  expectGracefulStream: expectGracefulStream
 };

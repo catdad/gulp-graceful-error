@@ -3,6 +3,7 @@
 
 var expect = require('chai').expect;
 var mockIo = require('mock-stdio');
+var through = require('through2');
 
 var util = require('./util.js');
 var mod = util.mod;
@@ -22,9 +23,49 @@ describe('when called with a function as the first parameter', function () {
   });
 
   describe('when the task returns a stream', function () {
-    it('returns a graceful stream');
+    it('returns a graceful stream', function () {
+      var stream = through();
+      var task = mod.lib(function () {
+        return stream;
+      });
 
-    it('sets process.exitCode on errors and successfully ends the stream');
+      var returnValue = task();
+
+      // returns same stream
+      expect(returnValue).to.equal(stream);
+      util.expectGracefulStream(returnValue);
+    });
+
+    it('sets process.exitCode on errors and successfully ends the stream', function (done) {
+      mockIo.start();
+
+      var proc = {};
+      var ERR = new Error('pancakes');
+      var stream = through();
+      var task = mod.inVm(proc)(function () {
+        setImmediate(function () {
+          stream.emit('error', ERR);
+        });
+
+        return stream;
+      });
+
+      var returnValue = task();
+
+      returnValue.on('error', function (err) {
+        mockIo.end();
+        done(err);
+      });
+
+      returnValue.on('end', function () {
+        var io = mockIo.end();
+
+        util.expectIoError(io, ERR);
+        expect(proc.exitCode).to.equal(1);
+
+        done();
+      });
+    });
   });
 
   describe('when the task returns a promise', function () {
@@ -63,6 +104,7 @@ describe('when called with a function as the first parameter', function () {
         var io = mockIo.end();
 
         util.expectIoError(io, expected);
+        expect(proc.exitCode).to.equal(1);
         expect(value).to.equal(undefined);
       }).catch(function (err) {
         mockIo.end();
@@ -96,6 +138,7 @@ describe('when called with a function as the first parameter', function () {
         var io = mockIo.end();
 
         util.expectIoError(io, ERR);
+        expect(proc.exitCode).to.equal(1);
 
         done();
       });

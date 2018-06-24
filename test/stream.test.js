@@ -1,7 +1,5 @@
 /* jshint node: true, mocha: true */
 
-var stream = require('stream');
-
 var expect = require('chai').expect;
 var through = require('through2');
 var unstyle = require('unstyle');
@@ -11,39 +9,13 @@ var util = require('./util.js');
 var mod = util.mod;
 var getLibInVm = util.getLibInVm;
 
-function expectStream(obj) {
-  expect(obj).to.be.instanceof(stream);
-  expect(obj).to.have.property('pipe').and.to.be.a('function');
-  expect(obj).to.have.property('on').and.to.be.a('function');
-  expect(obj).to.have.property('emit').and.to.be.a('function');
-}
-
-function expectThroughObjectStream(obj) {
-  expectStream(obj);
-
-  expect(obj)
-    .to.have.property('_readableState')
-    .and.to.have.property('objectMode')
-    .and.to.equal(true);
-
-  expect(obj)
-    .to.have.property('_writableState')
-    .and.to.have.property('objectMode')
-    .and.to.equal(true);
-}
-
-function expectGracefulStream(obj) {
-  expectStream(obj);
-  expect(obj).to.have.property('graceful').and.to.be.a('function');
-}
-
 describe('when called with no arguments', function () {
   it('returns a transform object stream', function () {
     var out = mod.lib();
 
     // uses object streams by default
-    expectThroughObjectStream(out);
-    expectGracefulStream(out);
+    util.expectThroughObjectStream(out);
+    util.expectGracefulStream(out);
   });
 
   it('wraps a stream that is piped in', function () {
@@ -64,8 +36,8 @@ describe('when called with no arguments', function () {
       .and.to.be.a('function')
       .and.to.not.equal(originalEmit);
 
-    expectStream(wrapped);
-    expectGracefulStream(wrapped);
+    util.expectStream(wrapped);
+    util.expectGracefulStream(wrapped);
   });
 
   it('throws an error if a non-stream is piped in', function () {
