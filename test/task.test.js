@@ -1,6 +1,7 @@
 /* jshint node: true, mocha: true */
 
 var expect = require('chai').expect;
+var mockIo = require('mock-stdio');
 
 var util = require('./util.js');
 var mod = util.mod;
@@ -26,9 +27,47 @@ describe('when called with a function as the first parameter', function () {
   });
 
   describe('when the task returns a promise', function () {
-    it('returns a promise');
+    function expectPromise(val) {
+      expect(val).to.have.property('then').and.to.be.a('function');
+      expect(val).to.have.property('catch').and.to.be.a('function');
+    }
 
-    it('catches promise errors, sets process.exitCode, and resolves the promise');
+    it('returns a promise', function () {
+      var expected = 'pineapples';
+      var task = mod.lib(function () {
+        return Promise.resolve(expected);
+      });
+
+      var val = task();
+      expectPromise(val);
+
+      return val.then(function (actual) {
+        expect(actual).to.equal(expected);
+      });
+    });
+
+    it('catches promise errors, sets process.exitCode, and resolves the promise', function () {
+      mockIo.start();
+
+      var proc = {};
+      var expected = new Error('pineapples');
+      var task = mod.inVm(proc)(function () {
+        return Promise.reject(expected);
+      });
+
+      var val = task();
+      expectPromise(val);
+
+      return val.then(function (value) {
+        var io = mockIo.end();
+
+        util.expectIoError(io, expected);
+        expect(value).to.equal(undefined);
+      }).catch(function (err) {
+        mockIo.end();
+        return Promise.reject(err);
+      });
+    });
   });
 
   describe('when the task is an asynchronous function', function () {
