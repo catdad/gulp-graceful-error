@@ -3,6 +3,9 @@
 var fs = require('fs');
 var vm = require('vm');
 
+var expect = require('chai').expect;
+var unstyle = require('unstyle');
+
 // Only run tests entirely thorugh the vm when
 // running the npm coverage script. Otherwise,
 // run the code directly.
@@ -10,6 +13,8 @@ var CONFUSING_COVERAGE = !!(
   process.env.npm_lifecycle_event &&
   process.env.npm_lifecycle_event === 'coverage'
 );
+
+var IO_ERR_REGEX = /Error in plugin ('|")graceful-gulp('|")/;
 
 var mod = {
   filename: require.resolve('../')
@@ -28,6 +33,15 @@ Object.defineProperty(mod, 'lib', {
 
     // run non-vm tests outside of the vm
     return require(mod.filename);
+  }
+});
+
+Object.defineProperty(mod, 'inVm', {
+  enumerable: true,
+  configurable: false,
+  writable: false,
+  value: function (processObj) {
+    return getLibInVm(processObj);
   }
 });
 
@@ -65,7 +79,23 @@ function getLibInVm(processObj) {
   return vmModule.exports;
 }
 
+function expectIoError(io, err) {
+  expect(io.stdout).to.have.length.above(0);
+  expect(io.stderr).to.have.lengthOf(0);
+
+  var stdout = unstyle.string(io.stdout);
+
+  // test that the content is expected
+  expect(stdout)
+    .to.match(IO_ERR_REGEX)
+    .and.to.match(new RegExp(err.message));
+
+  // test that the original output was in color
+  expect(io.stdout).to.not.equal(stdout);
+}
+
 module.exports = {
   mod: mod,
-  getLibInVm: getLibInVm
+  getLibInVm: getLibInVm,
+  expectIoError: expectIoError
 };

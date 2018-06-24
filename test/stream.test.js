@@ -174,18 +174,7 @@ describe('when called with no arguments', function () {
 
         var ioData = mockIo.end();
 
-        expect(ioData.stdout).to.have.length.above(0);
-        expect(ioData.stderr).to.have.lengthOf(0);
-
-        var stdout = unstyle.string(ioData.stdout);
-
-        // test that the original output was in color
-        expect(ioData.stdout).to.not.equal(stdout);
-
-        // test that the content is expected
-        expect(stdout)
-          .to.match(/Error in plugin ('|")graceful-gulp('|")/)
-          .and.to.match(new RegExp(ERR.message));
+        util.expectIoError(ioData, ERR);
 
         done();
       });
