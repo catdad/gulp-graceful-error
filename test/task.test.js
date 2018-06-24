@@ -122,6 +122,28 @@ describe('when called with a function as the first parameter', function () {
       expect(returnValue).to.equal(undefined);
     });
 
+    it('waits for the asynchronous task to be done', function (done) {
+      var task = mod.lib(function (cb) {
+        setImmediate(function () {
+          cb();
+        });
+      });
+
+      var waited = false;
+
+      task(function (err) {
+        if (err) {
+          return done(err);
+        }
+
+        expect(waited).to.equal(true);
+
+        done();
+      });
+
+      waited = true;
+    });
+
     it('sets process.exitCode on an error callback and completes the task successfully', function (done) {
       mockIo.start();
 
