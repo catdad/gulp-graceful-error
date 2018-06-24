@@ -1,4 +1,5 @@
 /* jshint node: true, mocha: true */
+/* global Promise */
 
 var expect = require('chai').expect;
 var mockIo = require('mock-stdio');
@@ -79,6 +80,24 @@ describe('when called with a function as the first parameter', function () {
   describe('when the task is a synchronous function with unknown return', function () {
     it('returns the return value of the original function', function () {
       var expected = {};
+      var task = mod.lib(function () {
+        return expected;
+      });
+
+      expect(task()).to.equal(expected);
+    });
+
+    it('handled return value of null', function () {
+      var expected = null;
+      var task = mod.lib(function () {
+        return expected;
+      });
+
+      expect(task()).to.equal(expected);
+    });
+
+    it('handles return value of undefined', function () {
+      var expected;
       var task = mod.lib(function () {
         return expected;
       });
