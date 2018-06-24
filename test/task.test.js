@@ -72,9 +72,34 @@ describe('when called with a function as the first parameter', function () {
   });
 
   describe('when the task is an asynchronous function', function () {
-    it('returns undefined');
+    it('returns undefined', function () {
+      var task = mod.lib(function (a) {});
+      var returnValue = task();
 
-    it('sets process.exitCode on an error callback and completes the task successfully');
+      expect(returnValue).to.equal(undefined);
+    });
+
+    it('sets process.exitCode on an error callback and completes the task successfully', function (done) {
+      mockIo.start();
+
+      var proc = {};
+      var ERR = new Error('flapjacks');
+      var task = mod.inVm(proc)(function (cb) {
+        setImmediate(cb, ERR);
+      });
+
+      task(function (err) {
+        if (err) {
+          return done(err);
+        }
+
+        var io = mockIo.end();
+
+        util.expectIoError(io, ERR);
+
+        done();
+      });
+    });
   });
 
   describe('when the task is a synchronous function with unknown return', function () {
